@@ -1,34 +1,49 @@
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TicTacToe.Scripts
 {
-    public class Box : MonoBehaviour, IPointerClickHandler
+    public class Box : MonoBehaviour
     {
+        public UnityEvent<Piece> OnPieceChanged;
         
-        [SerializeField] private Image XPiece;
-        [SerializeField] private Image OPiece;
+        public Piece Contains = Piece.None;
         
-        // input
-        public void OnPointerClick(PointerEventData eventData)
+        public enum Piece
+        {
+            X,O,None
+        }
+
+        private void Start()
+        {
+            GameManager.Instance.boxes.Add(this);
+        }
+
+
+        public void OnPointerClick()
         {
             if(transform.childCount == 0)
                 CommandInvoker.ExecuteCommand(new BoxCommand(this,GameManager.Instance.currentPlayer));
         }
 
+        public void ChangePiece(Piece newPiece)
+        {
+            Contains = newPiece;
+            OnPieceChanged?.Invoke(Contains);
+        }
+
         
-        //command
         public void OnCommandExecute()
         {
-            Instantiate(GameManager.Instance.currentPlayer == GameManager.Player.X ? XPiece : OPiece, transform.position,
-                Quaternion.identity, transform);
+            ChangePiece(GameManager.Instance.currentPlayer == GameManager.Player.X ? Piece.X : Piece.O);
         }
 
         public void OnCommandUndo()
         {
-            if(transform.childCount > 0)
-                Destroy(transform.GetChild(0).gameObject);
+            ChangePiece(Piece.None);
         }
     }
 
